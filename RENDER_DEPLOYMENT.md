@@ -99,13 +99,6 @@ Render will automatically detect the `render.yaml` file and create all the servi
 
 Render will create the services defined in the `render.yaml` file. You can monitor the deployment progress on the dashboard.
 
-## Testing Your Deployment
-
-Run the demo script against your deployed application:
-
-```bash
-python demo/demo_crawler.py [https://web-crawler-demo.onrender.com](https://web-crawler-project-r685.onrender.com) https://www.example.com
-```
 
 ## Important Considerations
 
