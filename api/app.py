@@ -3,6 +3,7 @@ FastAPI application for exposing the web crawler and analyzer as a service.
 """
 import os
 import time
+import random
 from fastapi import FastAPI, HTTPException, Query, BackgroundTasks
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, HttpUrl
@@ -35,7 +36,8 @@ logger = logging.getLogger(__name__)
 crawler = WebCrawler(
     delay=float(os.getenv("CRAWLER_DELAY", "2.0")),
     user_agent=os.getenv("CRAWLER_USER_AGENT", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36"),
-    respect_robots=os.getenv("RESPECT_ROBOTS", "true").lower() == "true"
+    respect_robots=os.getenv("RESPECT_ROBOTS", "true").lower() == "true",
+    browser_emulation=os.getenv("BROWSER_EMULATION", "true").lower() == "true"
 )
 metadata_extractor = MetadataExtractor()
 
