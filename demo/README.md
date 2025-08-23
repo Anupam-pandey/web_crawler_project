@@ -24,7 +24,7 @@ For example:
 
 ```bash
 # Test against the deployed API
-python demo_crawler.py https://web-crawler-demo.onrender.com https://www.example.com
+python demo_crawler.py https://web-crawler-project-r685.onrender.com/crawl https://www.example.com
 
 # Test against a local development server
 python demo_crawler.py http://localhost:8000 https://www.amazon.com
