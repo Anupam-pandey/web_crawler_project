@@ -815,6 +815,196 @@
 - Deploy predictive scaling based on workload patterns
 - Develop domain-specific optimizations for major sites
 
+## URL Processing Flow
+
+The following diagram illustrates the complete lifecycle of URL processing in our billion-scale crawler system:
+
+```
+┌───────────────┐
+│   URL Input   │
+└───────┬───────┘
+        ▼
+┌───────────────┐
+│  Validation & │
+│ Normalization │
+└───────┬───────┘
+        ▼
+┌───────────────┐
+│  Duplicate    │
+│  Detection    │
+└───────┬───────┘
+        ▼
+┌───────────────┐
+│  Domain       │
+│  Extraction   │
+└───────┬───────┘
+        ▼
+┌───────────────┐
+│ Robots.txt    │
+│ Compliance    │
+└───────┬───────┘
+        ▼
+┌───────────────┐
+│  Priority     │
+│  Assignment   │
+└───────┬───────┘
+        ▼
+┌───────────────┐
+│  Domain       │
+│  Scheduler    │
+└───────┬───────┘
+        ▼
+┌───────────────┐
+│  Rate         │
+│  Limiting     │
+└───────┬───────┘
+        ▼
+┌───────────────┐
+│  Crawler      │
+│  Assignment   │
+└───────┬───────┘
+        ▼
+┌───────────────┐        ┌────────────────┐
+│  Standard     │───X───▶│  Anti-bot      │
+│  HTTP Request │        │  Measures?     │
+└───────┬───────┘        └────────┬───────┘
+        │                          ▼
+        │                 ┌────────────────┐
+        │                 │  Browser-based │
+        │                 │  Rendering     │
+        │                 └────────┬───────┘
+        ▼                          ▼
+┌───────────────┐        ┌────────────────┐
+│  Content      │◀───────│  Content       │
+│  Extraction   │        │  Extraction    │
+└───────┬───────┘        └────────────────┘
+        ▼
+┌───────────────┐
+│  Metadata     │
+│  Processing   │
+└───────┬───────┘
+        ▼
+┌───────────────┐
+│  Link         │
+│  Extraction   │
+└───────┬───────┘
+        ▼
+┌───────────────┐
+│  Content      │
+│  Analysis     │
+└───────┬───────┘
+        ▼
+┌───────────────┐
+│  Data         │
+│  Storage      │
+└───────┬───────┘
+        ▼
+┌───────────────┐
+│  New URL      │
+│  Discovery    │
+└───────┬───────┘
+        ▼
+┌───────────────┐
+│  Back to      │
+│  URL Input    │
+└───────────────┘
+```
+
+### URL Processing Steps
+
+1. **URL Input**: URLs are ingested from various sources (files, databases, APIs, discovered links).
+
+2. **Validation & Normalization**:
+   - Remove URL fragments (#)
+   - Normalize protocol (HTTP vs HTTPS)
+   - Resolve relative URLs to absolute
+   - Handle URL encoding/decoding
+   - Validate URL format and structure
+
+3. **Duplicate Detection**:
+   - Check against previously crawled URLs using Bloom filters and hash tables
+   - Handle URL canonicalization to identify semantic duplicates
+
+4. **Domain Extraction**:
+   - Parse URL to extract domain information
+   - Group URLs by domain for politeness control
+   - Apply domain-specific policies
+
+5. **Robots.txt Compliance**:
+   - Fetch and parse robots.txt
+   - Check URL against disallow rules
+   - Extract crawl delay directives
+   - Cache robots.txt for efficiency
+
+6. **Priority Assignment**:
+   - Assign priority based on URL attributes
+   - Consider freshness, importance, site structure
+   - Apply custom business rules
+
+7. **Domain Scheduler**:
+   - Group URLs by domain
+   - Enforce per-domain rate limits
+   - Balance domain queues
+
+8. **Rate Limiting**:
+   - Apply politeness delays
+   - Adapt delays based on server response
+   - Implement token bucket algorithm
+
+9. **Crawler Assignment**:
+   - Route URL to appropriate crawler instance
+   - Consider crawler specialization (JS-heavy sites, etc.)
+   - Balance load across crawler pool
+
+10. **Standard HTTP Request**:
+    - Attempt standard HTTP request
+    - Set appropriate headers
+    - Handle cookies and sessions
+    - Follow redirects
+
+11. **Anti-Bot Detection**:
+    - If standard request fails or detects anti-bot measures
+    - Switch to enhanced crawling techniques
+
+12. **Browser-Based Rendering**:
+    - Use headless browser for JavaScript execution
+    - Handle dynamic content and interactions
+    - Implement browser fingerprint spoofing
+    - Simulate human-like behavior
+
+13. **Content Extraction**:
+    - Parse HTML content
+    - Handle different content types
+    - Extract text and structured data
+
+14. **Metadata Processing**:
+    - Extract titles, descriptions, keywords
+    - Process meta tags
+    - Identify content language and type
+
+15. **Link Extraction**:
+    - Find and extract links from content
+    - Normalize discovered URLs
+    - Categorize links (internal, external, etc.)
+
+16. **Content Analysis**:
+    - Classify content type
+    - Extract topics and entities
+    - Perform sentiment analysis
+    - Generate content summary
+
+17. **Data Storage**:
+    - Store content and metadata
+    - Update URL status in database
+    - Apply data lifecycle policies
+
+18. **New URL Discovery**:
+    - Process extracted links
+    - Filter based on crawl scope
+    - Add new URLs back to the input queue
+
+This comprehensive URL processing flow ensures efficient, polite, and scalable crawling of billions of URLs while respecting website policies and handling anti-bot measures effectively.
+
 ## Conclusion
 
 This design provides a comprehensive approach to operationalizing the collection of billions of URLs while optimizing for cost, reliability, performance, and scale. The system respects politeness policies, maintains configurability, and provides robust monitoring to ensure compliance with defined SLOs and SLAs. By implementing this design in phases, we can gradually build a production-ready system capable of handling the massive scale of web crawling required.
