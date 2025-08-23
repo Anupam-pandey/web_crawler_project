@@ -1,3 +1,5 @@
+setuptools>=68.0.0
+wheel>=0.41.0
 requests==2.31.0
 beautifulsoup4==4.12.2
 fastapi==0.104.1
