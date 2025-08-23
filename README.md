@@ -85,6 +85,9 @@ The Render deployment is ideal for demo purposes because:
 - Automatic deployment from GitHub
 - Built-in logs and monitoring
 
+
+**Important Note**: The free instance will spin down with inactivity, which can delay requests by 50 seconds or more. The first request after a period of inactivity will take longer as the instance spins up.
+
 ## Usage Examples
 
 ### Crawl a URL
@@ -101,12 +104,74 @@ curl -X POST "http://localhost:8000/crawl" \
 curl "http://localhost:8000/result/req_1234567890"
 ```
 
+### Test Assignment URLs
+
+Here are the curl commands for the specific test URLs mentioned in the assignment:
+
+```bash
+# Amazon product URL
+curl -X POST "https://web-crawler-project-r685.onrender.com/crawl" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "http://www.amazon.com/Cuisinart-CPT-122-Compact-2-Slice-Toaster/dp/B009GQ034C/ref=sr_1_1?s=kitchen&ie=UTF8&qid=1431620315&sr=1-1&keywords=toaster", "respect_robots": true}'
+
+# REI blog URL
+curl -X POST "https://web-crawler-project-r685.onrender.com/crawl" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "http://blog.rei.com/camp/how-to-introduce-your-indoorsy-friend-to-the-outdoors/", "respect_robots": true}'
+
+# CNN article URL
+curl -X POST "https://web-crawler-project-r685.onrender.com/crawl" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "http://www.cnn.com/2013/06/10/politics/edward-snowden-profile/", "respect_robots": true}'
+```
+
+To check the results (replace req_id with the request ID returned from the above commands):
+
+```bash
+curl "https://web-crawler-project-r685.onrender.com/result/req_id"
+```
+
+Note: Commercial websites may return different results when crawled from cloud environments versus local environments due to anti-bot protections.
+
+### Recommended Test URLs
+
+These URLs generally allow crawling and work well with our system:
+
+```
+# Simple websites
+https://example.com/
+https://httpbin.org/html
+
+# Documentation sites
+https://docs.python.org/3/
+https://en.wikipedia.org/wiki/Web_crawler
+
+# Open source project sites
+https://www.python.org/
+
+# Assignment Test URLs
+http://www.amazon.com/Cuisinart-CPT-122-Compact-2-Slice-Toaster/dp/B009GQ034C/ref=sr_1_1?s=kitchen&ie=UTF8&qid=1431620315&sr=1-1&keywords=toaster
+http://blog.rei.com/camp/how-to-introduce-your-indoorsy-friend-to-the-outdoors/
+http://www.cnn.com/2013/06/10/politics/edward-snowden-profile/
+```
+
+**Note**: Some websites implement strict access controls that may prevent successful crawling. For example, Amazon's response differs based on the origin of the request - local development environments typically receive more complete data compared to cloud environments (like Render) which may be detected as potential bots and served restricted content. This is due to IP-based bot detection systems that view cloud provider IPs with higher suspicion.
+
 ## API Documentation
 
-Once running, access the API documentation at:
+### Local Development
+When running locally, access the API documentation at:
 
 - Swagger UI: http://localhost:8000/docs
 - ReDoc: http://localhost:8000/redoc
+
+### Deployed Application
+For the deployed Render application, access the API documentation at:
+
+- Swagger UI: https://web-crawler-project-r685.onrender.com/docs
+- ReDoc: https://web-crawler-project-r685.onrender.com/redoc
+
+These interactive documentation interfaces allow you to test the API directly from your browser without using curl commands.
 
 ## Deployment
 
@@ -126,5 +191,5 @@ docker run -p 8000:8000 web-crawler
 
 ## Design Documentation
 
-- **Design Document**: See `docs/design_doc.md` for the system architecture and scaling design
-- **Implementation Plan**: See `docs/implementation_plan.md` for the phased approach to production
+- **Part 2 - Scaled Crawler Design**: See `docs/scaled_crawler_design.md` for detailed billion-scale URL processing architecture with optimizations for cost, reliability, performance, and scale
+- **Part 3 - Proof of Concept Plan**: See `docs/proof_of_concept_plan.md` for implementation plan with anti-bot challenges, potential blockers, and implementation schedules
