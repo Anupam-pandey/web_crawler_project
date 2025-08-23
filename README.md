@@ -124,19 +124,7 @@ Run the container:
 docker run -p 8000:8000 web-crawler
 ```
 
-### Cloud Deployment
-
-AWS CloudFormation template is available in `deployment/aws.yml`.
-
 ## Design Documentation
 
 - **Design Document**: See `docs/design_doc.md` for the system architecture and scaling design
 - **Implementation Plan**: See `docs/implementation_plan.md` for the phased approach to production
-
-## License
-
-[MIT License](LICENSE)
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
