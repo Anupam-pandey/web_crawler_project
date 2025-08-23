@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.9-slim
 
 WORKDIR /app
 
@@ -14,7 +14,9 @@ RUN apt-get update \
 
 # Copy requirements first for better caching
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir --only-binary=scikit-learn --upgrade scikit-learn==1.0.2
 
 # Download NLTK data
 RUN python -m nltk.downloader punkt stopwords wordnet
