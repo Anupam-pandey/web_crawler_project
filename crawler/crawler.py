@@ -249,21 +249,28 @@ class WebCrawler:
                             async def run_playwright():
                                 try:
                                     result = await self._fallback_playwright(url)
-                                    future.set_result(result)
+                                    if not future.done():
+                                        future.set_result(result)
                                 except Exception as e:
-                                    future.set_exception(e)
+                                    if not future.done():
+                                        future.set_exception(e)
                                     
-                            # Schedule the task and set a timeout
+                            # Schedule the task
                             task = asyncio.create_task(run_playwright())
-                            future.set_exception = lambda exc: future.set_exception(exc) if not future.done() else None
                             
-                            # Add timeout handling
+                            # Add timeout handling without modifying future methods
                             def timeout_handler():
                                 if not future.done():
-                                    future.set_exception(asyncio.TimeoutError("Operation timed out"))
+                                    # Cancel the task directly instead of setting exception on future
                                     task.cancel()
+                                    # Set exception if task is not done
+                                    if not future.done():
+                                        asyncio.run_coroutine_threadsafe(
+                                            asyncio.sleep(0), loop
+                                        )  # Prevent deadlock
+                                        future.set_exception(asyncio.TimeoutError("Operation timed out"))
                             
-                            loop.call_later(30, timeout_handler)
+                            timer_handle = loop.call_later(30, timeout_handler)
                             
                             # Wait for the result
                             try:
@@ -319,21 +326,28 @@ class WebCrawler:
                             async def run_playwright():
                                 try:
                                     result = await self._fallback_playwright(url)
-                                    future.set_result(result)
+                                    if not future.done():
+                                        future.set_result(result)
                                 except Exception as e:
-                                    future.set_exception(e)
+                                    if not future.done():
+                                        future.set_exception(e)
                                     
-                            # Schedule the task and set a timeout
+                            # Schedule the task
                             task = asyncio.create_task(run_playwright())
-                            future.set_exception = lambda exc: future.set_exception(exc) if not future.done() else None
                             
-                            # Add timeout handling
+                            # Add timeout handling without modifying future methods
                             def timeout_handler():
                                 if not future.done():
-                                    future.set_exception(asyncio.TimeoutError("Operation timed out"))
+                                    # Cancel the task directly instead of setting exception on future
                                     task.cancel()
+                                    # Set exception if task is not done
+                                    if not future.done():
+                                        asyncio.run_coroutine_threadsafe(
+                                            asyncio.sleep(0), loop
+                                        )  # Prevent deadlock
+                                        future.set_exception(asyncio.TimeoutError("Operation timed out"))
                             
-                            loop.call_later(30, timeout_handler)
+                            timer_handle = loop.call_later(30, timeout_handler)
                             
                             # Wait for the result
                             try:
