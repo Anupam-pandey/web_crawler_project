@@ -11,4 +11,6 @@ services:
         value: true
       - key: PYTHONPATH
         value: .
+      - key: USE_FALLBACK
+        value: true
     plan: free
