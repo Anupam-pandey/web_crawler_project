@@ -33,8 +33,8 @@ logger = logging.getLogger(__name__)
 
 # Initialize the crawler and analyzer components
 crawler = WebCrawler(
-    delay=float(os.getenv("CRAWLER_DELAY", "1.0")),
-    user_agent=os.getenv("CRAWLER_USER_AGENT", "SEOCrawlerBot/1.0"),
+    delay=float(os.getenv("CRAWLER_DELAY", "2.0")),
+    user_agent=os.getenv("CRAWLER_USER_AGENT", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36"),
     respect_robots=os.getenv("RESPECT_ROBOTS", "true").lower() == "true"
 )
 metadata_extractor = MetadataExtractor()
@@ -141,13 +141,38 @@ async def process_url(request_id: str, url: str, respect_robots: bool):
         # Set crawler respect_robots setting
         crawler.respect_robots = respect_robots
         
-        # Crawl the URL
-        crawl_result = crawler.crawl(url)
+        # Make up to 3 attempts to crawl the URL with increasing delays
+        max_attempts = 3
+        attempt = 0
+        crawl_result = None
         
-        if "error" in crawl_result:
+        while attempt < max_attempts:
+            try:
+                # Crawl the URL with exponential backoff
+                crawl_result = crawler.crawl(url)
+                
+                # If successful or got a non-retriable error, break the loop
+                if "error" not in crawl_result or "HTTP error: 403" in crawl_result.get("error", ""):
+                    break
+                    
+                # If we got a 500, 502, 503 or similar error, retry
+                attempt += 1
+                if attempt < max_attempts:
+                    # Exponential backoff with jitter
+                    delay = (2 ** attempt) + random.uniform(1, 3)
+                    time.sleep(delay)
+            except Exception as e:
+                logger.error(f"Error on attempt {attempt + 1}/{max_attempts} crawling {url}: {e}")
+                attempt += 1
+                if attempt < max_attempts:
+                    time.sleep(2 ** attempt)
+        
+        # Check final result            
+        if crawl_result is None or "error" in crawl_result:
+            error_msg = crawl_result.get("error", "Unknown error") if crawl_result else "Maximum retry attempts reached"
             results_cache[request_id] = {
                 "status": "failed",
-                "error": crawl_result["error"]
+                "error": error_msg
             }
             return
         
