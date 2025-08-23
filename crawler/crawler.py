@@ -231,7 +231,7 @@ class WebCrawler:
                 try:
                     # Try with a headless browser if available
                     if self._playwright_available:
-                        return self._fallback_playwright(url)
+                        return asyncio.run(self._fallback_playwright(url))
                     else:
                         logger.warning("No fallback browser libraries available")
                 except Exception as fb_error:
@@ -250,7 +250,7 @@ class WebCrawler:
                 try:
                     # Try with a headless browser if available
                     if self._playwright_available:
-                        return self._fallback_playwright(url)
+                        return asyncio.run(self._fallback_playwright(url))
                     else:
                         logger.warning("No fallback browser libraries available")
                 except Exception as fb_error:
@@ -269,53 +269,56 @@ class WebCrawler:
         except ImportError:
             return False
     
-    def _fallback_playwright(self, url):
+    async def _fallback_playwright(self, url):
         """Use Playwright as a fallback method to fetch content from anti-bot sites"""
         try:
             # Import Playwright modules
-            from playwright.sync_api import sync_playwright
+            from playwright.async_api import async_playwright
             
-            logger.info(f"Using Playwright to fetch {url}")
+            logger.info(f"Using Playwright async API to fetch {url}")
             
-            with sync_playwright() as p:
-                # Launch browser with stealth mode options
-                browser = p.chromium.launch(headless=True)
-                context = browser.new_context(
-                    user_agent=random.choice(self.user_agents) if self.browser_emulation else self.user_agent,
-                    viewport={'width': 1920, 'height': 1080},
-                    device_scale_factor=1
-                )
-                
-                # Add some randomization to appear more human-like
-                page = context.new_page()
-                page.goto("https://www.google.com")
-                page.wait_for_timeout(random.randint(500, 1500))
-                
-                # Go to the actual target URL
-                response = page.goto(url, timeout=30000)
-                
-                if response.status != 200:
-                    browser.close()
-                    return {
-                        "error": f"HTTP error: {response.status}",
-                        "url": url
-                    }
-                
-                # Wait for content to fully load
-                page.wait_for_load_state("networkidle")
-                
-                # Extract content
-                html_content = page.content()
-                browser.close()
-                
+            playwright = await async_playwright().start()
+            browser = await playwright.chromium.launch(headless=True)
+            
+            # Create a context with stealth options
+            context = await browser.new_context(
+                user_agent=random.choice(self.user_agents) if self.browser_emulation else self.user_agent,
+                viewport={'width': 1920, 'height': 1080},
+                device_scale_factor=1
+            )
+            
+            # Add some randomization to appear more human-like
+            page = await context.new_page()
+            await page.goto("https://www.google.com")
+            await page.wait_for_timeout(random.randint(500, 1500))
+            
+            # Go to the actual target URL
+            response = await page.goto(url, timeout=30000)
+            
+            if response.status != 200:
+                await browser.close()
+                await playwright.stop()
                 return {
-                    "url": url,
-                    "status_code": 200,
-                    "content_type": "text/html",
-                    "html_content": html_content,
-                    "headers": {"Content-Type": "text/html"},
-                    "timestamp": time.time()
+                    "error": f"HTTP error: {response.status}",
+                    "url": url
                 }
+            
+            # Wait for content to fully load
+            await page.wait_for_load_state("networkidle")
+            
+            # Extract content
+            html_content = await page.content()
+            await browser.close()
+            await playwright.stop()
+            
+            return {
+                "url": url,
+                "status_code": 200,
+                "content_type": "text/html",
+                "html_content": html_content,
+                "headers": {"Content-Type": "text/html"},
+                "timestamp": time.time()
+            }
                 
         except Exception as e:
             logger.error(f"Playwright fallback failed for {url}: {e}")
