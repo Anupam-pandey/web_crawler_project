@@ -28,13 +28,13 @@ First, push your code to GitHub:
 
 ```bash
 # Initialize a git repository if not already done
-cd /Users/anupampandey/Downloads/web_crawler_project
+cd ~/web_crawler_project
 git init
 git add .
 git commit -m "Initial commit"
 
 # Create a repository on GitHub and push
-git remote add origin https://github.com/YOUR_USERNAME/web-crawler-project.git
+git remote add origin https://github.com/<user-name>/web-crawler-project.git
 git push -u origin main
 ```
 
@@ -82,7 +82,7 @@ This method uses the `render.yaml` configuration file already included in the pr
 
 ### 1. Push Code to GitHub
 
-As in Method 1, push your code to GitHub.
+As in Method 1, push the code to GitHub.
 
 ### 2. Create a Blueprint Instance
 
