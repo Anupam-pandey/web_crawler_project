@@ -11,6 +11,9 @@ import random
 from pathlib import Path
 import os
 import robotexclusionrulesparser
+import asyncio
+import importlib
+from functools import wraps
 
 # Configure logging
 logging.basicConfig(
@@ -22,9 +25,10 @@ logger = logging.getLogger(__name__)
 class WebCrawler:
     """
     A web crawler that respects robots.txt and extracts page content.
+    Has fallback methods using browser automation for sites with anti-crawler measures.
     """
     
-    def __init__(self, delay=1.0, user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36", respect_robots=True, browser_emulation=True):
+    def __init__(self, delay=1.0, user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36", respect_robots=True, browser_emulation=True, use_fallback=True):
         """
         Initialize the crawler with configurable parameters.
         
@@ -37,9 +41,12 @@ class WebCrawler:
         self.user_agent = user_agent
         self.respect_robots = respect_robots
         self.browser_emulation = browser_emulation
+        self.use_fallback = use_fallback
         self.domain_last_accessed = {}
         self.robots_parser = robotexclusionrulesparser.RobotExclusionRulesParser()
         self.robots_cache = {}
+        self._playwright_available = self._check_module_available('playwright')
+        self._pyppeteer_available = self._check_module_available('pyppeteer')
         
         # List of common user agents to rotate through when browser_emulation is enabled
         self.user_agents = [
@@ -224,10 +231,144 @@ class WebCrawler:
             }
         except Exception as e:
             logger.error(f"Unexpected error crawling {url}: {e}")
+            
+            # Try fallback methods if regular request failed and fallbacks are enabled
+            if self.use_fallback:
+                logger.info(f"Trying fallback methods for {url}")
+                try:
+                    # Try with a headless browser if available
+                    if self._playwright_available:
+                        return self._fallback_playwright(url)
+                    elif self._pyppeteer_available:
+                        return asyncio.run(self._fallback_pyppeteer(url))
+                    else:
+                        logger.warning("No fallback browser libraries available")
+                except Exception as fb_error:
+                    logger.error(f"Fallback method also failed for {url}: {fb_error}")
+            
             return {
                 "error": str(e),
                 "url": url
             }
+
+    def _check_module_available(self, module_name):
+        """Check if a Python module is available to import"""
+        try:
+            importlib.import_module(module_name)
+            return True
+        except ImportError:
+            return False
+    
+    def _fallback_playwright(self, url):
+        """Use Playwright as a fallback method to fetch content from anti-bot sites"""
+        try:
+            # Import Playwright modules
+            from playwright.sync_api import sync_playwright
+            
+            logger.info(f"Using Playwright to fetch {url}")
+            
+            with sync_playwright() as p:
+                # Launch browser with stealth mode options
+                browser = p.chromium.launch(headless=True)
+                context = browser.new_context(
+                    user_agent=random.choice(self.user_agents) if self.browser_emulation else self.user_agent,
+                    viewport={'width': 1920, 'height': 1080},
+                    device_scale_factor=1
+                )
+                
+                # Add some randomization to appear more human-like
+                page = context.new_page()
+                page.goto("https://www.google.com")
+                page.wait_for_timeout(random.randint(500, 1500))
+                
+                # Go to the actual target URL
+                response = page.goto(url, timeout=30000)
+                
+                if response.status != 200:
+                    browser.close()
+                    return {
+                        "error": f"HTTP error: {response.status}",
+                        "url": url
+                    }
+                
+                # Wait for content to fully load
+                page.wait_for_load_state("networkidle")
+                
+                # Extract content
+                html_content = page.content()
+                browser.close()
+                
+                return {
+                    "url": url,
+                    "status_code": 200,
+                    "content_type": "text/html",
+                    "html_content": html_content,
+                    "headers": {"Content-Type": "text/html"},
+                    "timestamp": time.time()
+                }
+                
+        except Exception as e:
+            logger.error(f"Playwright fallback failed for {url}: {e}")
+            return {"error": f"Playwright fallback failed: {str(e)}", "url": url}
+    
+    async def _fallback_pyppeteer(self, url):
+        """Use Pyppeteer as a fallback method to fetch content from anti-bot sites"""
+        try:
+            # Import Pyppeteer modules
+            import pyppeteer
+            
+            logger.info(f"Using Pyppeteer to fetch {url}")
+            
+            # Launch browser
+            browser = await pyppeteer.launch({
+                'headless': True,
+                'args': [
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-dev-shm-usage',
+                    '--disable-accelerated-2d-canvas',
+                    '--disable-gpu'
+                ]
+            })
+            
+            page = await browser.newPage()
+            
+            # Set user agent
+            await page.setUserAgent(random.choice(self.user_agents) if self.browser_emulation else self.user_agent)
+            
+            # Set viewport
+            await page.setViewport({'width': 1920, 'height': 1080})
+            
+            # Add some randomization
+            await page.goto("https://www.google.com")
+            await asyncio.sleep(random.uniform(0.5, 1.5))
+            
+            # Go to the actual target URL
+            response = await page.goto(url, {'waitUntil': 'networkidle0', 'timeout': 30000})
+            
+            if response.status != 200:
+                await browser.close()
+                return {
+                    "error": f"HTTP error: {response.status}",
+                    "url": url
+                }
+            
+            # Extract content
+            html_content = await page.content()
+            await browser.close()
+            
+            return {
+                "url": url,
+                "status_code": 200,
+                "content_type": "text/html",
+                "html_content": html_content,
+                "headers": {"Content-Type": "text/html"},
+                "timestamp": time.time()
+            }
+            
+        except Exception as e:
+            logger.error(f"Pyppeteer fallback failed for {url}: {e}")
+            return {"error": f"Pyppeteer fallback failed: {str(e)}", "url": url}
 
 # For testing
 if __name__ == "__main__":
