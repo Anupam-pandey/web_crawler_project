@@ -253,14 +253,24 @@ class WebCrawler:
                                 except Exception as e:
                                     future.set_exception(e)
                                     
-                            # Schedule the task
+                            # Schedule the task and set a timeout
                             task = asyncio.create_task(run_playwright())
+                            future.set_exception = lambda exc: future.set_exception(exc) if not future.done() else None
                             
-                            # Wait for the result using a timeout
+                            # Add timeout handling
+                            def timeout_handler():
+                                if not future.done():
+                                    future.set_exception(asyncio.TimeoutError("Operation timed out"))
+                                    task.cancel()
+                            
+                            loop.call_later(30, timeout_handler)
+                            
+                            # Wait for the result
                             try:
                                 # Execute the coroutine and handle any exceptions properly
                                 try:
-                                    return loop.run_until_complete(asyncio.wait_for(future, timeout=30))
+                                    # Don't create a new asyncio.wait_for coroutine - it needs to be awaited or run directly
+                                    return loop.run_until_complete(future)
                                 except Exception as exc:
                                     logger.warning(f"Playwright fallback error: {exc}")
                                     return {"error": f"Playwright fallback error: {str(exc)}", "url": url}
@@ -313,14 +323,24 @@ class WebCrawler:
                                 except Exception as e:
                                     future.set_exception(e)
                                     
-                            # Schedule the task
+                            # Schedule the task and set a timeout
                             task = asyncio.create_task(run_playwright())
+                            future.set_exception = lambda exc: future.set_exception(exc) if not future.done() else None
                             
-                            # Wait for the result using a timeout
+                            # Add timeout handling
+                            def timeout_handler():
+                                if not future.done():
+                                    future.set_exception(asyncio.TimeoutError("Operation timed out"))
+                                    task.cancel()
+                            
+                            loop.call_later(30, timeout_handler)
+                            
+                            # Wait for the result
                             try:
                                 # Execute the coroutine and handle any exceptions properly
                                 try:
-                                    return loop.run_until_complete(asyncio.wait_for(future, timeout=30))
+                                    # Don't create a new asyncio.wait_for coroutine - it needs to be awaited or run directly
+                                    return loop.run_until_complete(future)
                                 except Exception as exc:
                                     logger.warning(f"Playwright fallback error: {exc}")
                                     return {"error": f"Playwright fallback error: {str(exc)}", "url": url}
