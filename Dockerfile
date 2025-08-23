@@ -1,4 +1,4 @@
-FROM python:3.9-slim
+FROM mcr.microsoft.com/playwright/python:v1.40.0-jammy
 
 WORKDIR /app
 
@@ -6,20 +6,10 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Install system dependencies
+# Install additional system dependencies
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends gcc wget gnupg \
+    && apt-get install -y --no-install-recommends gcc \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-    
-# Install Playwright dependencies using modern method (no apt-key)
-RUN mkdir -p /etc/apt/keyrings \
-    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub > /etc/apt/keyrings/google.asc \
-    && echo "deb [signed-by=/etc/apt/keyrings/google.asc] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google.list \
-    && apt-get update \
-    && apt-get install -y fonts-liberation libu2f-udev xdg-utils \
-    && apt-get install -y google-chrome-stable fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf libxss1 \
-      --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
@@ -27,8 +17,7 @@ COPY requirements.txt .
 # Install dependencies
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
     pip install --no-cache-dir numpy==1.20.3 && \
-    pip install --no-cache-dir -r requirements.txt && \
-    playwright install chromium
+    pip install --no-cache-dir -r requirements.txt
 
 # Download NLTK data
 RUN python -m nltk.downloader punkt stopwords wordnet
