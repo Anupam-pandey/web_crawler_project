@@ -24,7 +24,7 @@ class WebCrawler:
     A web crawler that respects robots.txt and extracts page content.
     """
     
-    def __init__(self, delay=1.0, user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36", respect_robots=True):
+    def __init__(self, delay=1.0, user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36", respect_robots=True, browser_emulation=True):
         """
         Initialize the crawler with configurable parameters.
         
@@ -36,9 +36,28 @@ class WebCrawler:
         self.delay = delay
         self.user_agent = user_agent
         self.respect_robots = respect_robots
+        self.browser_emulation = browser_emulation
         self.domain_last_accessed = {}
         self.robots_parser = robotexclusionrulesparser.RobotExclusionRulesParser()
         self.robots_cache = {}
+        
+        # List of common user agents to rotate through when browser_emulation is enabled
+        self.user_agents = [
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.75 Safari/537.36',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.3 Safari/605.1.15',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Edge/99.0.1150.36 Safari/537.36',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:98.0) Gecko/20100101 Firefox/98.0'
+        ]
+        
+        # Common referrer URLs to use when browser_emulation is enabled
+        self.referrers = [
+            'https://www.google.com/',
+            'https://www.google.com/search?q=product+reviews',
+            'https://www.bing.com/search?q=product+information',
+            'https://search.yahoo.com/search?p=product+details',
+            'https://duckduckgo.com/?q=product+specs'
+        ]
         
         # Default request headers
         self.headers = {
@@ -63,7 +82,7 @@ class WebCrawler:
         # Fetch and parse robots.txt
         robots_url = f"{base_url}/robots.txt"
         try:
-            response = requests.get(robots_url, headers=self.headers, timeout=10)
+            response = requests.get(robots_url, headers=self.headers, timeout=15)
             if response.status_code == 200:
                 self.robots_parser.parse(response.text)
             else:
@@ -134,18 +153,36 @@ class WebCrawler:
             # Clone the headers and customize for this request
             current_headers = self.headers.copy()
             
-            # Set a refer domain based on the target URL
-            parsed_url = urlparse(url)
-            domain = parsed_url.netloc
-            if 'amazon' in domain:
-                current_headers['Referer'] = 'https://www.google.com/search?q=product+reviews'
+            # Set headers to emulate a browser if enabled
+            if self.browser_emulation:
+                parsed_url = urlparse(url)
+                domain = parsed_url.netloc
+                
+                # Rotate user agents
+                current_headers['User-Agent'] = random.choice(self.user_agents)
+                
+                # Use a random referrer with a search query related to the domain
+                base_referrer = random.choice(self.referrers)
+                keywords = domain.split('.')
+                if len(keywords) > 1 and keywords[0] not in ['www', 'blog']:
+                    search_term = keywords[0]
+                    current_headers['Referer'] = f"{base_referrer}{search_term}"
+                else:
+                    current_headers['Referer'] = base_referrer
+                
+                # Add common browser cookies for consent etc.
+                current_headers['Cookie'] = 'consent=true; notice_behavior=implied,us'
+                
+                # Add cache control headers to simulate fresh browser request
+                current_headers['Cache-Control'] = 'max-age=0'
+                current_headers['Sec-Ch-Ua'] = '"Chromium";v="112", "Google Chrome";v="112"'
                 
             # Send the request with session
             logger.info(f"Crawling URL: {url}")
             response = session.get(
                 url, 
                 headers=current_headers, 
-                timeout=15,
+                timeout=30,
                 allow_redirects=True
             )
             
