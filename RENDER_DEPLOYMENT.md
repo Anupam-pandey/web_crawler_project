@@ -121,12 +121,3 @@ From the Render dashboard, click on your web service, then select the "Logs" tab
 ### Check Service Status
 
 The "Events" tab in your service dashboard shows deployment history and service status changes.
-
-## Cleanup
-
-When you no longer need the application:
-
-1. Go to the Render dashboard
-2. Select your web service
-3. Click "Settings"
-4. Scroll to the bottom and click "Delete Service"
