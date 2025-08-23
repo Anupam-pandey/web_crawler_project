@@ -24,7 +24,7 @@ class WebCrawler:
     A web crawler that respects robots.txt and extracts page content.
     """
     
-    def __init__(self, delay=1.0, user_agent="SEOCrawlerBot/1.0", respect_robots=True):
+    def __init__(self, delay=1.0, user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36", respect_robots=True):
         """
         Initialize the crawler with configurable parameters.
         
@@ -43,9 +43,12 @@ class WebCrawler:
         # Default request headers
         self.headers = {
             "User-Agent": self.user_agent,
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-            "Accept-Language": "en-US,en;q=0.5",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+            "Accept-Language": "en-US,en;q=0.9",
             "DNT": "1",  # Do Not Track request header
+            "Referer": "https://www.google.com/",
+            "Connection": "keep-alive",
+            "Upgrade-Insecure-Requests": "1"
         }
     
     def _get_robots_parser(self, url):
@@ -121,15 +124,37 @@ class WebCrawler:
         self._respect_crawl_delay(url)
         
         try:
-            # Send the request
+            # Add jitter to requests to avoid detection
+            jitter_delay = random.uniform(0.5, 2.5)
+            time.sleep(jitter_delay)
+            
+            # Create a session to manage cookies and add retry mechanism
+            session = requests.Session()
+            
+            # Clone the headers and customize for this request
+            current_headers = self.headers.copy()
+            
+            # Set a refer domain based on the target URL
+            parsed_url = urlparse(url)
+            domain = parsed_url.netloc
+            if 'amazon' in domain:
+                current_headers['Referer'] = 'https://www.google.com/search?q=product+reviews'
+                
+            # Send the request with session
             logger.info(f"Crawling URL: {url}")
-            response = requests.get(url, headers=self.headers, timeout=15)
+            response = session.get(
+                url, 
+                headers=current_headers, 
+                timeout=15,
+                allow_redirects=True
+            )
             
             # Check if request was successful
             if response.status_code != 200:
                 return {
                     "error": f"HTTP error: {response.status_code}",
-                    "url": url
+                    "url": url,
+                    "response_headers": dict(response.headers)
                 }
                 
             # Get content type from headers
