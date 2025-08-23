@@ -84,13 +84,3 @@ Topics:
   - information
   - website
 ```
-
-## Sharing with Examiners
-
-When sharing your deployed API with examiners, provide them with:
-
-1. The deployed API URL
-2. Instructions to run this demo script
-3. A few example URLs to test with
-
-This will allow them to quickly verify the functionality of your solution without having to read through the API documentation or manually construct requests.
