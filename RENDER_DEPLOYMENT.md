@@ -104,7 +104,7 @@ Render will create the services defined in the `render.yaml` file. You can monit
 Run the demo script against your deployed application:
 
 ```bash
-python demo/demo_crawler.py https://web-crawler-demo.onrender.com https://www.example.com
+python demo/demo_crawler.py [https://web-crawler-demo.onrender.com](https://web-crawler-project-r685.onrender.com) https://www.example.com
 ```
 
 ## Important Considerations
@@ -117,24 +117,7 @@ python demo/demo_crawler.py https://web-crawler-demo.onrender.com https://www.ex
 
 ### Keeping Your Service Active
 
-For demo purposes, you may want to prevent your service from sleeping:
-
-1. **Option 1**: Use a service like UptimeRobot to ping your app every 5-10 minutes
-2. **Option 2**: Upgrade to the "Starter" plan ($7/month, stays active always)
-
 For a one-time demo, the free tier is perfectly adequate, as long as you let examiners know about the potential cold start delay.
-
-## Sharing with Examiners
-
-When sharing your deployed application with examiners, provide:
-
-1. The application URL: `https://web-crawler-demo.onrender.com`
-2. Instructions for using the demo script:
-   ```
-   python demo/demo_crawler.py https://web-crawler-demo.onrender.com https://www.example.com
-   ```
-3. A note about the cold start delay (up to 60 seconds for the first request if the service has been inactive)
-4. A few example URLs to test with the crawler
 
 ## Monitoring and Troubleshooting
 
