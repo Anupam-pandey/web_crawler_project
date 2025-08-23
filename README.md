@@ -69,7 +69,7 @@ pip install rich requests
 python demo/demo_crawler.py http://localhost:8000 https://www.example.com
 
 # Or against a deployed instance
-python demo/demo_crawler.py https://your-deployed-url.com https://www.example.com
+python demo/demo_crawler.py https://web-crawler-project-r685.onrender.com/crawl https://www.example.com
 ```
 
 ### Cloud Deployment
