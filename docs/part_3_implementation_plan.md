@@ -673,7 +673,7 @@ async def handle_amazon_site(self, page):
 
 ### Production-Scale Anti-Bot Solutions
 
-For a billion-scale URL processing system, we recommend these enterprise-grade solutions:
+For a billion-scale URL processing system, I recommend these enterprise-grade solutions:
 
 1. **IP Infrastructure**
    - Implement a large proxy farm with rotating IPs
