@@ -16,7 +16,6 @@ RUN apt-get update \
 COPY requirements.txt .
 # Install dependencies
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir numpy==1.20.3 && \
     pip install --no-cache-dir -r requirements.txt
 
 # Download NLTK data
