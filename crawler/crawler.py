@@ -231,7 +231,44 @@ class WebCrawler:
                 try:
                     # Try with a headless browser if available
                     if self._playwright_available:
-                        return asyncio.run(self._fallback_playwright(url))
+                        # Create a new event loop for synchronous contexts
+                        try:
+                            loop = asyncio.get_event_loop()
+                        except RuntimeError:
+                            # If no event loop exists, create a new one
+                            loop = asyncio.new_event_loop()
+                            asyncio.set_event_loop(loop)
+                            
+                        # If we're in a running loop (like FastAPI), use create_task
+                        if loop.is_running():
+                            logger.info("Using existing event loop for Playwright")
+                            # Create a Future to store the result
+                            future = asyncio.Future()
+                            
+                            # Define a function to set the future result
+                            async def run_playwright():
+                                try:
+                                    result = await self._fallback_playwright(url)
+                                    future.set_result(result)
+                                except Exception as e:
+                                    future.set_exception(e)
+                                    
+                            # Schedule the task
+                            task = asyncio.create_task(run_playwright())
+                            
+                            # Wait for the result using a timeout
+                            try:
+                                # Since we may not be in a true async context, use run_until_complete
+                                # with a timeout to wait for the future
+                                return loop.run_until_complete(asyncio.wait_for(future, timeout=30))
+                            except asyncio.TimeoutError:
+                                task.cancel()
+                                return {"error": "Playwright fallback timed out", "url": url}
+                            except Exception as e:
+                                logger.warning(f"Playwright fallback error: {e}")
+                        else:
+                            # In synchronous context, we can use run_until_complete
+                            return loop.run_until_complete(self._fallback_playwright(url))
                     else:
                         logger.warning("No fallback browser libraries available")
                 except Exception as fb_error:
@@ -250,7 +287,44 @@ class WebCrawler:
                 try:
                     # Try with a headless browser if available
                     if self._playwright_available:
-                        return asyncio.run(self._fallback_playwright(url))
+                        # Create a new event loop for synchronous contexts
+                        try:
+                            loop = asyncio.get_event_loop()
+                        except RuntimeError:
+                            # If no event loop exists, create a new one
+                            loop = asyncio.new_event_loop()
+                            asyncio.set_event_loop(loop)
+                            
+                        # If we're in a running loop (like FastAPI), use create_task
+                        if loop.is_running():
+                            logger.info("Using existing event loop for Playwright")
+                            # Create a Future to store the result
+                            future = asyncio.Future()
+                            
+                            # Define a function to set the future result
+                            async def run_playwright():
+                                try:
+                                    result = await self._fallback_playwright(url)
+                                    future.set_result(result)
+                                except Exception as e:
+                                    future.set_exception(e)
+                                    
+                            # Schedule the task
+                            task = asyncio.create_task(run_playwright())
+                            
+                            # Wait for the result using a timeout
+                            try:
+                                # Since we may not be in a true async context, use run_until_complete
+                                # with a timeout to wait for the future
+                                return loop.run_until_complete(asyncio.wait_for(future, timeout=30))
+                            except asyncio.TimeoutError:
+                                task.cancel()
+                                return {"error": "Playwright fallback timed out", "url": url}
+                            except Exception as e:
+                                logger.warning(f"Playwright fallback error: {e}")
+                        else:
+                            # In synchronous context, we can use run_until_complete
+                            return loop.run_until_complete(self._fallback_playwright(url))
                     else:
                         logger.warning("No fallback browser libraries available")
                 except Exception as fb_error:
