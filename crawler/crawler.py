@@ -258,14 +258,18 @@ class WebCrawler:
                             
                             # Wait for the result using a timeout
                             try:
-                                # Since we may not be in a true async context, use run_until_complete
-                                # with a timeout to wait for the future
-                                return loop.run_until_complete(asyncio.wait_for(future, timeout=30))
+                                # Execute the coroutine and handle any exceptions properly
+                                try:
+                                    return loop.run_until_complete(asyncio.wait_for(future, timeout=30))
+                                except Exception as exc:
+                                    logger.warning(f"Playwright fallback error: {exc}")
+                                    return {"error": f"Playwright fallback error: {str(exc)}", "url": url}
                             except asyncio.TimeoutError:
                                 task.cancel()
                                 return {"error": "Playwright fallback timed out", "url": url}
                             except Exception as e:
-                                logger.warning(f"Playwright fallback error: {e}")
+                                logger.warning(f"Other error during Playwright execution: {e}")
+                                return {"error": f"Other error during Playwright execution: {str(e)}", "url": url}
                         else:
                             # In synchronous context, we can use run_until_complete
                             return loop.run_until_complete(self._fallback_playwright(url))
@@ -314,14 +318,18 @@ class WebCrawler:
                             
                             # Wait for the result using a timeout
                             try:
-                                # Since we may not be in a true async context, use run_until_complete
-                                # with a timeout to wait for the future
-                                return loop.run_until_complete(asyncio.wait_for(future, timeout=30))
+                                # Execute the coroutine and handle any exceptions properly
+                                try:
+                                    return loop.run_until_complete(asyncio.wait_for(future, timeout=30))
+                                except Exception as exc:
+                                    logger.warning(f"Playwright fallback error: {exc}")
+                                    return {"error": f"Playwright fallback error: {str(exc)}", "url": url}
                             except asyncio.TimeoutError:
                                 task.cancel()
                                 return {"error": "Playwright fallback timed out", "url": url}
                             except Exception as e:
-                                logger.warning(f"Playwright fallback error: {e}")
+                                logger.warning(f"Other error during Playwright execution: {e}")
+                                return {"error": f"Other error during Playwright execution: {str(e)}", "url": url}
                         else:
                             # In synchronous context, we can use run_until_complete
                             return loop.run_until_complete(self._fallback_playwright(url))
