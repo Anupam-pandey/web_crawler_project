@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, HttpUrl
 import uvicorn
 import logging
+import asyncio
 from typing import Optional, List, Dict, Any
 
 # Import the crawler and analyzer components
@@ -152,7 +153,8 @@ async def process_url(request_id: str, url: str, respect_robots: bool):
         while attempt < max_attempts:
             try:
                 # Crawl the URL with exponential backoff
-                crawl_result = crawler.crawl(url)
+                # Run the synchronous crawler.crawl in a thread to avoid blocking
+                crawl_result = await asyncio.to_thread(crawler.crawl, url)
                 
                 # If successful or got a non-retriable error, break the loop
                 if "error" not in crawl_result or "HTTP error: 403" in crawl_result.get("error", ""):
