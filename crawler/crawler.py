@@ -224,6 +224,19 @@ class WebCrawler:
             
         except requests.exceptions.RequestException as e:
             logger.error(f"Request error for {url}: {e}")
+            
+            # Try fallback methods if regular request failed and fallbacks are enabled
+            if self.use_fallback:
+                logger.info(f"Trying fallback methods for {url} after RequestException")
+                try:
+                    # Try with a headless browser if available
+                    if self._playwright_available:
+                        return self._fallback_playwright(url)
+                    else:
+                        logger.warning("No fallback browser libraries available")
+                except Exception as fb_error:
+                    logger.error(f"Fallback method also failed for {url}: {fb_error}")
+            
             return {
                 "error": str(e),
                 "url": url
