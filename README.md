@@ -68,12 +68,8 @@ pip install rich requests
 # Run the demo against a local server
 python demo/demo_crawler.py http://localhost:8000 https://www.example.com
 
-curl "http://localhost:8000/result/<>"
-
 # Or against a deployed instance
-python demo/demo_crawler.py web-crawler-project-r685.onrender.com https://www.example.com
-
- 
+python demo/demo_crawler.py https://your-deployed-url.com https://www.example.com
 ```
 
 ### Cloud Deployment
@@ -192,6 +188,53 @@ Run the container:
 ```
 docker run -p 8000:8000 web-crawler
 ```
+
+## Running Tests
+
+The project includes a comprehensive test suite covering crawler functionality, API endpoints, and content analysis.
+
+### Test Setup
+
+```bash
+# Make sure you're in your virtual environment
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install test dependencies
+pip install pytest pytest-asyncio pytest-cov httpx
+
+# Make sure test dependencies are properly installed
+pip list | grep -E "pytest|asyncio|httpx"
+```
+
+### Running Tests
+
+```bash
+# Run all tests
+python -m pytest --import-mode=importlib
+
+# Run specific test files
+python -m pytest --import-mode=importlib tests/test_crawler.py
+python -m pytest --import-mode=importlib tests/test_analyzer.py
+
+# Run tests with verbose output
+python -m pytest -v
+
+# Run tests and show coverage report
+python -m pytest --cov=crawler --cov=api --cov=analyzer
+```
+
+### What's Tested
+
+1. **Basic Crawler** (`test_crawler.py`)
+   - Initialization with different parameters
+   - Crawling example sites
+   - Error handling for non-existent sites
+   - Robots.txt compliance
+
+2. **Content Analysis** (`test_analyzer.py`)
+   - Metadata extraction from HTML
+   - Handling of malformed content
+   - Link analysis
 
 ## Design Documentation
 
