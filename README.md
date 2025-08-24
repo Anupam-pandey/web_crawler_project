@@ -220,7 +220,7 @@ python -m pytest --import-mode=importlib tests/test_analyzer.py
 python -m pytest -v
 
 # Run tests and show coverage report
-python -m pytest --cov=crawler --cov=api --cov=analyzer
+python -m pytest --cov=crawler --cov=analyzer
 ```
 
 ### What's Tested
