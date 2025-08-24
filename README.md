@@ -66,7 +66,7 @@ curl -X POST "http://localhost:8000/crawl" \
   -H "Content-Type: application/json" \
   -d '{"url": "https://example.com", "respect_robots": true}'
 
-# Or by a demo script as well
+# Or by a demo-script as well
 
 # Install demo dependencies
 pip install rich requests
