@@ -59,15 +59,14 @@ The API will be available at http://localhost:8000
 
 ### Running the Demo Script
 
-We've included a demonstration script that showcases the functionality:
+We've included a demonstration script and curl that showcases the functionality:
 
 ```
-we can test it via
 curl -X POST "http://localhost:8000/crawl" \
   -H "Content-Type: application/json" \
   -d '{"url": "https://example.com", "respect_robots": true}'
 
-# OR
+# Or by a demo script as well
 
 # Install demo dependencies
 pip install rich requests
