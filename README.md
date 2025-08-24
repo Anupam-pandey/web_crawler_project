@@ -62,6 +62,13 @@ The API will be available at http://localhost:8000
 We've included a demonstration script that showcases the functionality:
 
 ```
+we can test it via
+curl -X POST "http://localhost:8000/crawl" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example.com", "respect_robots": true}'
+
+# OR
+
 # Install demo dependencies
 pip install rich requests
 
@@ -70,6 +77,7 @@ python demo/demo_crawler.py http://localhost:8000 https://www.example.com
 
 # Or against a deployed instance
 python demo/demo_crawler.py https://web-crawler-project-r685.onrender.com/crawl https://www.example.com
+
 ```
 
 ### Cloud Deployment
